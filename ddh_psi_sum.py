@@ -102,3 +102,67 @@ class Party1(Party):
             # Randomize ciphertext (ARefresh)
             sum_ciphertext = sum_ciphertext + self.other_public_key.encrypt(0)
         return cardinality, sum_ciphertext
+
+class Party2(Party):
+    def __init__(self, pairs: Set[Tuple[str, int]]):
+        super().__init__("P2")
+        self.pairs = pairs
+        self.generate_paillier_keypair()
+
+    def round2(self, v_hashed: List[bytes]) -> Tuple[List[bytes], List[Tuple[bytes, int]]]:
+        """Round 2: Exponentiate received points, process own pairs."""
+        # Deserialize and exponentiate received points
+        z = []
+        for v_bytes in v_hashed:
+            point = ec.EllipticCurvePublicKey.from_encoded_point(self.ddh.curve, v_bytes).public_numbers()
+            z_point = self.ddh.exponentiate(point, self.k)
+            z.append(z_point.to_key().public_bytes(Encoding.X962, PublicFormat.CompressedPoint))
+        random.shuffle(z)
+
+        # Process own pairs
+        w_pairs = []
+        for w, t in self.pairs:
+            w_hash = self.ddh.hash_to_curve(w, self.seed)
+            w_exp = self.ddh.exponentiate(w_hash, self.k)
+            enc_t = self.key_pair.public_key.encrypt(t)
+            w_bytes = w_exp.to_key().public_bytes(Encoding.X962, PublicFormat.CompressedPoint)
+            w_pairs.append((w_bytes, enc_t))
+        random.shuffle(w_pairs)
+        return z, w_pairs
+
+    def output(self, sum_ciphertext: int) -> int:
+        """Decrypt the sum ciphertext to get the intersection sum."""
+        return self.key_pair.decrypt(sum_ciphertext)
+
+def run_protocol(p1: Party1, p2: Party2) -> Tuple[int, int]:
+    """Execute the DDH-based Private Intersection-Sum protocol."""
+    # Setup: P2 sends public key to P1
+    p1.set_other_public_key(p2.key_pair.public_key)
+
+    # Round 1
+    v_hashed = p1.round1()
+
+    # Round 2
+    z, w_pairs = p2.round2(v_hashed)
+
+    # Round 3
+    cardinality, sum_ciphertext = p1.round3(z, w_pairs)
+
+    # Output
+    intersection_sum = p2.output(sum_ciphertext)
+    return cardinality, intersection_sum
+
+# Example usage
+if __name__ == "__main__":
+    # Sample inputs
+    p1_identifiers = {"user1", "user2", "user3", "user4"}
+    p2_pairs = {("user2", 10), ("user3", 20), ("user5", 30)}
+    
+    # Initialize parties
+    p1 = Party1(p1_identifiers)
+    p2 = Party2(p2_pairs)
+    
+    # Run protocol
+    cardinality, intersection_sum = run_protocol(p1, p2)
+    print(f"Intersection Cardinality: {cardinality}")
+    print(f"Intersection Sum: {intersection_sum}")
