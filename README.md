@@ -65,7 +65,7 @@ pip install cryptography gmpy2
 若 $v_i = w_j$，则 $H(v_i) = H(w_j)$，故 $H(v_i)^{k_1 k_2} = H(w_j)^{k_1 k_2}$。哈希碰撞概率 negl(λ)。
 
 ### 安全性
-在半诚实模型下，视图可模拟 (Theorem 1 & 2 [1])。DDH 确保掩码伪随机；打乱隐藏对应；HE 确保聚合隐私。
+在半诚实模型下，视图可模拟 (Paper Theorem 1 & 2 [1])。DDH 确保掩码伪随机；打乱隐藏对应；HE 确保聚合隐私。
 
 ---
 
