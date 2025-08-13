@@ -65,7 +65,7 @@ pip install cryptography gmpy2
 若 $v_i = w_j$，则 $H(v_i) = H(w_j)$，故 $H(v_i)^{k_1 k_2} = H(w_j)^{k_1 k_2}$。哈希碰撞概率 negl(λ)。
 
 ### 安全性
-在半诚实模型下，视图可模拟 (Paper Theorem 1 & 2 [1])。DDH 确保掩码伪随机；打乱隐藏对应；HE 确保聚合隐私。
+在半诚实模型下，视图可模拟 (Theorem 1 & 2 [1])。DDH 确保掩码伪随机；打乱隐藏对应；HE 确保聚合隐私。
 
 ---
 
@@ -94,10 +94,23 @@ print(f"交集求和: {sum_result}, 大小: {cardinality}")  # 输出: 400, 2
 
 ---
 
+### test.py 说明
+
+- **目的**：该测试套件用于验证基于DDH的私有交集求和协议的正确性，确保其能根据论文（https://eprint.iacr.org/2019/723.pdf）第3.1节及图2的描述，正确计算交集大小和交集值的总和。测试覆盖了多种输入场景，包括正常情况、边界情况和错误处理。
+- **测试用例**：
+  - `test_basic_intersection`：测试具有两个共同标识符的典型情况，验证交集大小为2，总和为10 + 20 = 30。
+  - `test_empty_intersection`：测试没有共同标识符的情况，预期交集大小和总和均为0。
+  - `test_single_intersection`：测试只有一个共同标识符的情况，检查交集大小为1及正确总和。
+  - `test_empty_input_p1`：测试P1没有标识符的情况，预期结果为空。
+  - `test_empty_input_p2`：测试P2没有标识符-值对的情况，预期结果为空。
+  - `test_large_values`：测试较大交集值的情况，确保Paillier加密正确处理。
+  - `test_hash_to_curve_consistency`：验证`hash_to_curve`函数在相同输入和种子下产生一致结果，这是正确计算交集的关键。
+- **设置**：使用固定种子以确保测试的可重复性，保证哈希行为一致。
+- **依赖**：与主实现使用相同的库（`cryptography`和`phe`）。
+- **假设**：协议实现在`ddh_psi_sum.py`文件中，测试文件导入必要的类和函数。
+
 ### 实现细节
-- `paillier.py`: Paillier 加法同态加密实现。
-- `ddh.py`: 椭圆曲线群操作。
-- `protocol.py`: 协议核心类 (`Party1`, `Party2`)。
+- `ddh_psi_sum.py`: 协议核心类 (`Party1`, `Party2`)。
 - 测试: `python -m unittest test_protocol.py`。
 
 ## 参考文献
